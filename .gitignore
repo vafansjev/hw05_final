@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#static/css stuff
+static/css
+*.css
+bootstrap.min.css
+media/
+
 # C extensions
 *.so
 
