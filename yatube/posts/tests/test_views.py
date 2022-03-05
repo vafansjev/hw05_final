@@ -189,7 +189,8 @@ class PostPagesTests(TestCase):
 
     def test_authorized_can_follow(self):
         """Авторизованный пользователь может подписываться
-        на других пользователей и удалять их из подписок."""
+        на других пользователей только 1 раз
+        и пользователь может удалять их из подписок."""
         new_user = User.objects.create_user(username='new_follower')
         follower = Client()
         follower.force_login(new_user)
@@ -201,6 +202,10 @@ class PostPagesTests(TestCase):
             'posts:profile_unfollow',
             kwargs={'username': self.user.username}
         )
+
+        follower.get(follow_reverse)
+        follow_count = Follow.objects.count()
+        self.assertEqual(follow_count, 1)
 
         follower.get(follow_reverse)
         follow_count = Follow.objects.count()
