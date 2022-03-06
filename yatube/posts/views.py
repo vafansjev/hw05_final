@@ -26,10 +26,9 @@ def index(request):
         posts,
         request,
     )
-    title = 'Последние обновления на сайте'
     context = {
         'page_obj': pagination_context['page_obj'],
-        'title': title,
+        'index': True,
     }
     return render(request, template, context)
 
@@ -45,8 +44,6 @@ def group_posts(request, slug):
     context = {
         'group': group,
         'page_obj': pagination_context['page_obj'],
-        'group.title': group.title,
-        'group.description': group.description,
     }
     return render(request, template, context)
 
@@ -60,7 +57,6 @@ def profile(request, username):
         posts,
         request,
     )
-    title = 'Профайл пользователя'
 
     if request.user.is_authenticated:
         followers = Follow.objects.filter(
@@ -70,7 +66,6 @@ def profile(request, username):
 
     context = {
         'page_obj': pagination_context['page_obj'],
-        'title': title,
         'post_count': pagination_context['post_count'],
         'username': user,
         'following': following,
@@ -80,7 +75,7 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     template = 'posts/post_detail.html'
-    post = Post.objects.get(pk=post_id)
+    post = get_object_or_404(Post, pk=post_id)
     form = CommentForm()
     comment = post.comments.all()
     posts_count = Post.objects.filter(author=post.author).count()
@@ -154,7 +149,6 @@ def add_comment(request, post_id):
 @login_required
 def follow_index(request):
     template = 'posts/follow.html'
-    title = 'Мои подписки'
     authors = Follow.objects.filter(user=request.user).values_list(
         'author_id', flat=True
     )
@@ -166,8 +160,8 @@ def follow_index(request):
 
     context = {
         'page_obj': pagination_context['page_obj'],
-        'title': title,
         'post_count': pagination_context['post_count'],
+        'follow': True,
     }
 
     return render(request, template, context)

@@ -5,6 +5,8 @@ from ..models import Group, Post
 
 User = get_user_model()
 
+PAGINATOR_PAGES_COUNT = 10
+
 
 class PaginatorViewsTest(TestCase):
     @classmethod
@@ -39,4 +41,8 @@ class PaginatorViewsTest(TestCase):
         for reverse_name in templates_pages_names:
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
-                self.assertEqual(len(response.context['page_obj']), 10)
+                self.assertEqual(
+                    len(
+                        response.context['page_obj']),
+                    PAGINATOR_PAGES_COUNT
+                )

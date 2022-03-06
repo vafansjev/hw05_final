@@ -31,6 +31,7 @@ class PostCreateFormTests(TestCase):
             slug='slug',
             description='Описание тестовой группы'
         )
+
         cls.post = Post.objects.create(
             author=cls.user,
             text='Тестовый пост',
@@ -63,19 +64,25 @@ class PostCreateFormTests(TestCase):
         )
 
         form_data = {
-            'text': 'Тестовый пост',
+            'text': 'Тестовый пост2',
             'group': self.group.id,
             'image': uploaded,
         }
+
         response = self.authorized_client.post(
             reverse('posts:post_create'),
             data=form_data,
             follow=True
         )
-        self.assertRedirects(response, reverse(
-            'posts:profile', kwargs={'username': self.user}
-        ))
+        reverse_page = reverse(
+            'posts:profile', kwargs={'username': self.user})
+
+        self.assertRedirects(response, reverse_page)
         self.assertEqual(Post.objects.count(), posts_count + 1)
+
+        response2 = self.authorized_client.get(reverse_page)
+        context = list(response2.context['page_obj'])
+        self.assertEqual(context, list(Post.objects.all()))
 
     def test_edit_post(self):
         """Валидная форма редактирует запись в Post из posts:edit_post"""
@@ -135,10 +142,7 @@ class PostCreateFormTests(TestCase):
             group_help_text, 'Группа, к которой будет относиться пост')
 
     def test_auth_user_can_comment(self):
-        """Проверка создания комментария:
-        -Авторизованный пользователь может комментировать пост
-        -Гость не может комментировать пост"""
-
+        """Проверка - Авторизованный пользователь может комментировать пост"""
         form_data = {
             'text': 'Тестовый комментарий',
             'author': self.user,
@@ -150,10 +154,17 @@ class PostCreateFormTests(TestCase):
             follow=True
         )
         comment_object = response.context['comments'][0]
-        comments_count = self.post.comments.count()
         self.assertEqual(comment_object.text, form_data['text'])
 
-        response = self.guest_client.post(
+    def test_guest_cant_comment(self):
+        """Проверка - Гость не может создавать пост"""
+        form_data = {
+            'text': 'Тестовый комментарий Гостя',
+            'author': self.user,
+            'post': self.post,
+        }
+        comments_count = self.post.comments.count()
+        self.guest_client.post(
             reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
             data=form_data,
             follow=True

@@ -62,6 +62,7 @@ class PostPagesTests(TestCase):
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
     def test_pages_uses_correct_template(self):
         """Проверка корректности namespase:name View Posts"""
@@ -170,7 +171,6 @@ class PostPagesTests(TestCase):
 
     def test_index_cache(self):
         """Проверка кэширования главной страницы"""
-        cache.clear()
         default_response = self.authorized_client.get(
             reverse('posts:index')
         )

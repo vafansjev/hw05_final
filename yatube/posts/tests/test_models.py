@@ -1,12 +1,23 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
-
+from django.test import Client, TestCase
+from django.conf import settings
+from django.urls import reverse
 from ..models import Group, Post
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+import shutil
+import tempfile
 
 User = get_user_model()
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class PostModelTest(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -20,6 +31,10 @@ class PostModelTest(TestCase):
             author=cls.user,
             text='Тестовая пост',
         )
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
 
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
@@ -58,3 +73,28 @@ class PostModelTest(TestCase):
                 self.assertEqual(
                     post._meta.get_field(field).help_text,
                     expected_value)
+
+    def test_post_picture_only(self):
+        """Тест если в пост загружается только картинка"""
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
+
+        form_data = {
+            'image': uploaded,
+        }
+        response = self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
+        )
+        self.assertFormError(response, 'form', 'text', 'Обязательное поле.')

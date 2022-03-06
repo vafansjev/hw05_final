@@ -1,5 +1,4 @@
 from django.db import models
-from core.models import PubdateModel
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -18,14 +17,18 @@ class Group(models.Model):
         verbose_name = 'Группа'
         verbose_name_plural = 'Группы'
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.title
 
 
-class Post(PubdateModel):
+class Post(models.Model):
     text = models.TextField(
         verbose_name='Текст поста',
         help_text='Текст нового поста'
+    )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата создания',
+        auto_now_add=True,
     )
     update_date = models.DateTimeField(
         verbose_name='Дата редактирования',
@@ -57,11 +60,11 @@ class Post(PubdateModel):
         verbose_name = 'Пост'
         verbose_name_plural = 'Посты'
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.text[:15]
 
 
-class Comment(PubdateModel):
+class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
@@ -81,13 +84,17 @@ class Comment(PubdateModel):
         verbose_name='Текст комментария',
         help_text='Введите текст комментария'
     )
+    pub_date = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
 
     class Meta:
         ordering = ['-pub_date']
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.text[:15]
 
 
@@ -112,5 +119,5 @@ class Follow(models.Model):
         verbose_name = 'Подписки'
         verbose_name_plural = 'Подписки'
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.user.username
