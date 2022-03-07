@@ -118,7 +118,7 @@ class PostCreateFormTests(TestCase):
         при редактировании или создании поста"""
         reverse_list = {
             reverse('posts:post_edit', kwargs={'post_id': self.post.id}):
-            '/auth/login/?next=/posts/' + str(self.post.id) + '/edit/',
+            f'/auth/login/?next=/posts/{str(self.post.id)}/edit/',
             reverse('posts:post_create'):
             '/auth/login/?next=/create/',
         }

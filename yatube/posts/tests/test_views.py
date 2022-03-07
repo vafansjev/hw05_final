@@ -65,7 +65,7 @@ class PostPagesTests(TestCase):
         cache.clear()
 
     def test_pages_uses_correct_template(self):
-        """Проверка корректности namespase:name View Posts"""
+        """Проверка корректности используемых шаблонов"""
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
             reverse('posts:group_list', kwargs={'slug': self.group.slug}):
@@ -81,20 +81,29 @@ class PostPagesTests(TestCase):
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
-                self.assertTemplateUsed(response, template,)
+                self.assertTemplateUsed(response, template)
 
-    def test_post_pages_correct_context(self):
-        """Проверка шаблонов index, group_list, profile на контекст"""
-        response_list = {
-            reverse('posts:index'),
-            reverse('posts:group_list', kwargs={'slug': self.group.slug}),
+    def test_index_page_correct_context(self):
+        """Проверка шаблона index на контекст"""
+        response = self.authorized_client.get(reverse('posts:index'))
+        context = list(response.context['page_obj'])
+        self.assertEqual(context, list(Post.objects.all()))
+
+    def test_group_page_correct_context(self):
+        """Проверка шаблона group_list на контекст"""
+        response = self.authorized_client.get(
+            reverse('posts:group_list', kwargs={'slug': self.group.slug})
+        )
+        context = list(response.context['page_obj'])
+        self.assertEqual(context, list(Post.objects.all()))
+
+    def test_profile_page_correct_context(self):
+        """Проверка шаблона profile на контекст"""
+        response = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': self.user.username})
-        }
-        for reverse_name in response_list:
-            with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_client.get(reverse_name)
-                context = list(response.context['page_obj'])
-                self.assertEqual(context, list(Post.objects.all()[:10]))
+        )
+        context = list(response.context['page_obj'])
+        self.assertEqual(context, list(Post.objects.all()))
 
     def test_post_detail_correct_context(self):
         """Шаблон формы post_detail сформирован с правильным контекстом"""
@@ -104,39 +113,55 @@ class PostPagesTests(TestCase):
         context = response.context['post']
         self.assertEqual(context, self.post)
 
-    def test_post_edit_create_show_correct_context(self):
-        """Шаблоны форм create и edit сформированы с правильным контекстом"""
-        reverse_list = {
-            reverse('posts:post_create'),
-            reverse('posts:post_edit', kwargs={'post_id': self.post.id}),
-        }
+    def test_post_create_correct_context(self):
+        """Шаблон формы create сформирован с правильным контекстом"""
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
             'image': forms.fields.ImageField,
         }
-        for reverse_value in reverse_list:
-            response = self.authorized_client.get(reverse_value)
-            for value, expected in form_fields.items():
-                with self.subTest(value=value):
-                    form_field = response.context.get('form').fields.get(value)
-                    self.assertIsInstance(form_field, expected)
+        response = self.authorized_client.get(reverse('posts:post_create'))
+        for value, expected in form_fields.items():
+            with self.subTest(value=value):
+                form_field = response.context.get('form').fields.get(value)
+                self.assertIsInstance(form_field, expected)
 
-    def test_post_create_correct(self):
-        """Проверка при создании поста:
-        -Есть на главной странице;
-        -Есть на странице выбранной группы;
-        -Есть в профайле пользователя"""
-        reverse_names = {
-            reverse('posts:index'),
-            reverse('posts:group_list', kwargs={'slug': self.group.slug}),
-            reverse('posts:profile', kwargs={'username': self.user.username}),
+    def test_post_edit_correct_context(self):
+        """Шаблон формы edit сформирован с правильным контекстом"""
+        form_fields = {
+            'text': forms.fields.CharField,
+            'group': forms.fields.ChoiceField,
+            'image': forms.fields.ImageField,
         }
-        for reverse_name in reverse_names:
-            with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_client.get(reverse_name)
-                context = list(response.context['page_obj'])
-                self.assertIn(self.post, context)
+        response = self.authorized_client.get(
+            reverse('posts:post_edit', kwargs={'post_id': self.post.id})
+        )
+        for value, expected in form_fields.items():
+            with self.subTest(value=value):
+                form_field = response.context.get('form').fields.get(value)
+                self.assertIsInstance(form_field, expected)
+
+    def test_post_exist_index_page(self):
+        """После создания пост есть на главной странице"""
+        response = self.authorized_client.get(reverse('posts:index'))
+        context = list(response.context['page_obj'])
+        self.assertIn(self.post, context)
+
+    def test_post_exist_group_page(self):
+        """После создания пост есть на странице группы;"""
+        response = self.authorized_client.get(
+            reverse('posts:group_list', kwargs={'slug': self.group.slug})
+        )
+        context = list(response.context['page_obj'])
+        self.assertIn(self.post, context)
+
+    def test_post_exist_profile_page(self):
+        """После создания пост есть в профайле пользователя"""
+        response = self.authorized_client.get(
+            reverse('posts:profile', kwargs={'username': self.user.username})
+        )
+        context = list(response.context['page_obj'])
+        self.assertIn(self.post, context)
 
     def test_post_in_right_group(self):
         """Проверка, что пост из первой группы не попал во вторую"""
@@ -146,20 +171,27 @@ class PostPagesTests(TestCase):
         context = list(response.context['page_obj'])
         self.assertNotIn(self.post, context)
 
-    def test_post_pages_correct_image_context(self):
-        """Проверка шаблонов index, group_list, profile
-        на наличие изображения в контексте"""
-        response_list = {
-            reverse('posts:index'),
-            reverse('posts:group_list', kwargs={'slug': self.group.slug}),
-            reverse('posts:profile', kwargs={'username': self.user.username}),
-        }
-        for reverse_name in response_list:
-            with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_client.get(reverse_name)
-                test_image = response.context['page_obj'].object_list[0].image
-                self.assertEqual(test_image, self.post.image,
-                                 f'Нет изображения в посте {reverse_name}')
+    def test_index_page_correct_image_context(self):
+        """Изображение есть в контексте index"""
+        response = self.authorized_client.get(reverse('posts:index'))
+        test_image = response.context['page_obj'].object_list[0].image
+        self.assertEqual(test_image, self.post.image)
+
+    def test_group_page_correct_image_context(self):
+        """Изображение есть в контексте group_list"""
+        response = self.authorized_client.get(
+            reverse('posts:group_list', kwargs={'slug': self.group.slug})
+        )
+        test_image = response.context['page_obj'].object_list[0].image
+        self.assertEqual(test_image, self.post.image)
+
+    def test_profile_page_correct_image_context(self):
+        """Изображение есть в контексте profile"""
+        response = self.authorized_client.get(
+            reverse('posts:profile', kwargs={'username': self.user.username})
+        )
+        test_image = response.context['page_obj'].object_list[0].image
+        self.assertEqual(test_image, self.post.image)
 
     def test_post_detail_correct_image_context(self):
         """Проверка наличия изображения в контексте post_detail"""

@@ -7,15 +7,14 @@ class AboutPagesURLTests(TestCase):
         self.guest_client = Client()
 
     def test_about_url_exists_at_desired_location(self):
-        """Проверка доступности адреса /about/author/ и /tech/."""
-        page_list = {
-            '/about/author/',
-            '/about/tech/',
-        }
-        for page in page_list:
-            with self.subTest(page=page):
-                response = self.guest_client.get(page)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
+        """Проверка доступности адреса /about/author/"""
+        response = self.guest_client.get('/about/author/')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_tech_url_exists_at_desired_location(self):
+        """Проверка доступности адреса /about/tech/."""
+        response = self.guest_client.get('/about/tech/')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_about_url_uses_correct_template(self):
         """Проверка шаблона для адреса /about/author/ и /tech/."""

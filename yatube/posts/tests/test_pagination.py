@@ -31,18 +31,24 @@ class PaginatorViewsTest(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
-    def test_pages_paginator(self):
-        """Проверка паджинаторов на страницах index, group_list, profile"""
-        templates_pages_names = {
-            reverse('posts:index'),
-            reverse('posts:group_list', kwargs={'slug': self.group.slug}),
-            reverse('posts:profile', kwargs={'username': self.user.username}),
-        }
-        for reverse_name in templates_pages_names:
-            with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_client.get(reverse_name)
-                self.assertEqual(
-                    len(
-                        response.context['page_obj']),
-                    PAGINATOR_PAGES_COUNT
-                )
+    def test_index_page_paginator(self):
+        """Проверка паджинатора на странице index"""
+        response = self.authorized_client.get(reverse('posts:index'))
+        self.assertEqual(
+            len(response.context['page_obj']), PAGINATOR_PAGES_COUNT)
+
+    def test_group_page_paginator(self):
+        """Проверка паджинатора на странице group_list"""
+        response = self.authorized_client.get(
+            reverse('posts:group_list', kwargs={'slug': self.group.slug})
+        )
+        self.assertEqual(
+            len(response.context['page_obj']), PAGINATOR_PAGES_COUNT)
+
+    def test_profile_page_paginator(self):
+        """Проверка паджинатора на странице profile"""
+        response = self.authorized_client.get(
+            reverse('posts:profile', kwargs={'username': self.user.username})
+        )
+        self.assertEqual(
+            len(response.context['page_obj']), PAGINATOR_PAGES_COUNT)

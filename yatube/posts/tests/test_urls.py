@@ -31,9 +31,9 @@ class StaticURLTests(TestCase):
         """Проверка общедоступных страницы без авторизации"""
         page_list = {
             '/',
-            '/group/' + self.group.slug + '/',
-            '/profile/' + self.user.username + '/',
-            '/posts/' + str(self.post.id) + '/',
+            f'/group/{self.group.slug}/',
+            f'/profile/{self.user.username}/',
+            f'/posts/{str(self.post.id)}/',
         }
         for page in page_list:
             with self.subTest(page=page):
@@ -49,7 +49,7 @@ class StaticURLTests(TestCase):
         """Проверка create/ и post/edit для авторизованного"""
         page_list = {
             '/create/',
-            '/posts/' + str(self.post.id) + '/edit/',
+            f'/posts/{str(self.post.id)}/edit/',
         }
         for page in page_list:
             with self.subTest(page=page):
@@ -60,8 +60,8 @@ class StaticURLTests(TestCase):
         """Проверка create/ и post/edit для НЕ авторизованного"""
         page_list = {
             '/create/': '/auth/login/?next=/create/',
-            '/posts/' + str(self.post.id) + '/edit/':
-            '/auth/login/?next=/posts/' + str(self.post.id) + '/edit/',
+            f'/posts/{str(self.post.id)}/edit/':
+            f'/auth/login/?next=/posts/{str(self.post.id)}/edit/',
         }
         for url, redirect_url in page_list.items():
             with self.subTest(url=url):
@@ -72,9 +72,9 @@ class StaticURLTests(TestCase):
         """Проверка соответствия шаблонам urls"""
         templates_url_names = {
             '/': 'posts/index.html',
-            '/group/' + self.group.slug + '/': 'posts/group_list.html',
-            '/profile/' + self.user.username + '/': 'posts/profile.html',
-            '/posts/' + str(self.post.id) + '/': 'posts/post_detail.html',
+            f'/group/{self.group.slug}/': 'posts/group_list.html',
+            f'/profile/{self.user.username}/': 'posts/profile.html',
+            f'/posts/{str(self.post.id)}/': 'posts/post_detail.html',
         }
         for url, template in templates_url_names.items():
             with self.subTest(url=url):
